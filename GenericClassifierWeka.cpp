@@ -3,7 +3,7 @@
 
 using namespace std;
 
-jdouble findClassForVector(double values[],int sizeOfArray, jclass cls2,jmethodID mid2,JNIEnv *env){
+jdouble classify(double values[],int sizeOfArray, jclass cls2,jmethodID mid2,JNIEnv *env){
 	jdoubleArray outJNIArray = env->NewDoubleArray(sizeOfArray);
 	if (NULL != outJNIArray) //TODO Find what is the second variable
 		(*env).SetDoubleArrayRegion(outJNIArray, 0 , sizeOfArray, values);
@@ -69,7 +69,7 @@ int main(int n, char *argv[]) {
 			
 			int sizeOfArray = sizeof(values)/sizeof(*values);
 
-			int classOfSample = findClassForVector(values,sizeOfArray,cls2,mid2,env);
+			int classOfSample = classify(values,sizeOfArray,cls2,mid2,env);
 			cout <<  "Class of provided input is " << classOfSample  << endl;
 		}
 	}
