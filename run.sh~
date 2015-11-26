@@ -5,7 +5,7 @@ export JAVA_HOME=/usr/lib/jvm/java-8-oracle
 export LD_LIBRARY_PATH=$JAVA_HOME/jre/lib/amd64/:$JAVA_HOME/jre/lib/amd64/server
 LIBPATH=$JAVA_HOME/jre/lib/amd64/server/
 export WORK_DIR=/home/ni/Robotics/CPP/Robotics/
-export WEKA_HOME=/opt/weka
+export WEKA_HOME=/opt/weka/
 export CLASSPATH=$WEKA_HOME/weka.jar
 export PATH=$PATH:$WEKA_HOME/weka.jar
 

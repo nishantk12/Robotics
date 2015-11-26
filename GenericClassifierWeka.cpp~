@@ -13,6 +13,7 @@ jdouble findClassForVector(double values[],int sizeOfArray, jclass cls2,jmethodI
 	if (env->ExceptionCheck()) {
         	env->ExceptionDescribe();
 	}
+	cout << endl << "Class : " << foundClass << endl;
 	return foundClass;
 }
 
