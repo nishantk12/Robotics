@@ -4,9 +4,8 @@ clear
 export JAVA_HOME=/usr/lib/jvm/java-8-oracle
 export LD_LIBRARY_PATH=$JAVA_HOME/jre/lib/amd64/:$JAVA_HOME/jre/lib/amd64/server
 LIBPATH=$JAVA_HOME/jre/lib/amd64/server/
-export WORK_DIR=/home/ni/Robotics/CPP/Robotics/
-export WEKA_HOME=/opt/weka
-export CLASSPATH=$WEKA_HOME/weka.jar
+export WEKA_HOME=/home/milind/Desktop/JNI_Test/weka-3-6-13
+export CLASSPATH=$WEKA_HOME/weka.jar:/home/milind/workspace_robotics/gitRepo/Robotics/
 export PATH=$PATH:$WEKA_HOME/weka.jar
 
 echo '---------------------------'
@@ -33,4 +32,4 @@ g++ -Wno-write-strings -I $JAVA_HOME/include/ -I $JAVA_HOME/include/linux/ Gener
 
 echo 'Execution starts here:'
 echo '---------------------------'
-./executable
+./executable Arun.model irisData.csv 5
