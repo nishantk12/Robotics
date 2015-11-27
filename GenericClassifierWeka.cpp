@@ -1,8 +1,13 @@
 #include <jni.h>
 #include <iostream>
+#include <stdlib.h>
+#include <string.h>
 
 using namespace std;
 
+/**
+* Method to classify an instance for the model loaded	
+*/
 jdouble classify(double values[],int sizeOfArray, jclass cls2,jmethodID mid2,JNIEnv *env){
 	jdoubleArray outJNIArray = env->NewDoubleArray(sizeOfArray);
 	if (NULL != outJNIArray) //TODO Find what is the second variable
@@ -16,14 +21,24 @@ jdouble classify(double values[],int sizeOfArray, jclass cls2,jmethodID mid2,JNI
 	return foundClass;
 }
 
+/**
+* Method to load the Model, Identify the number of parameters required, identify the class of the model
+* and execute the classification method
+*/
 int main(int n, char *argv[]) {
 	
 	JavaVM *jvm;
 	JNIEnv *env;
 	JavaVMInitArgs vm_args;
 	JavaVMOption* options = new JavaVMOption[1];
-	//TODO Change to System Variable CLASSPATH
-	options[0].optionString = "-Djava.class.path=.:/opt/weka/weka.jar"; 
+
+	const char *c_cpkey = "-Djava.class.path=";
+	const char *c_cpvalue = getenv("CLASSPATH");
+	char c_classpath[18 + strlen(c_cpvalue)];
+	strcpy(c_classpath , c_cpkey);
+	strcat(c_classpath , c_cpvalue);
+	options[0].optionString = c_classpath;
+
 
 	vm_args.version = JNI_VERSION_1_8;
 	vm_args.nOptions = 1;
@@ -47,20 +62,17 @@ int main(int n, char *argv[]) {
 		if(mid == NULL)
 			cerr << "ERROR: Method not found !" << endl;
 		else {
-			jobject inputStr = env->NewStringUTF("Arun.model");
-			jobject inputDataFile = env->NewStringUTF("irisData.csv");
-			env->CallStaticVoidMethod(cls2, mid,inputStr,inputDataFile,(jint)5);
+			jobject inputStr = env->NewStringUTF(argv[1]);
+			jobject inputDataFile = env->NewStringUTF(argv[2]);
+			env->CallStaticVoidMethod(cls2, mid,inputStr,inputDataFile,(jint)atoi(argv[3]));
  			if (env->ExceptionCheck()) {
                 		env->ExceptionDescribe();
 			}
 			cout << endl << "Model Loaded " << endl;
 		}
 
-
-
 		jmethodID mid2 = env->GetStaticMethodID(cls2, "classify", "([D)D");
 		 
-		
 		if(mid2 == NULL)
 			cerr << "ERROR: Method not found!" << endl;
 		else {
