@@ -2,93 +2,108 @@
 #include <iostream>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
 
 using namespace std;
 
-/**
-* Method to classify an instance for the model loaded	
-*/
-jdouble classify(double values[],int sizeOfArray, jclass cls2,jmethodID mid2,JNIEnv *env){
-	jdoubleArray outJNIArray = env->NewDoubleArray(sizeOfArray);
-	if (NULL != outJNIArray) //TODO Find what is the second variable
-		(*env).SetDoubleArrayRegion(outJNIArray, 0 , sizeOfArray, values);
-	else
-		cout << "ERROR: Java Double Array not created";
-	jdouble foundClass = env->CallStaticDoubleMethod(cls2, mid2,outJNIArray);
-	if (env->ExceptionCheck()) {
-        	env->ExceptionDescribe();
-	}
-	return foundClass;
-}
+class GenericClassifierWeka {
+	 JavaVM *jvm;
+	 JNIEnv *env;
+	 JavaVMInitArgs vm_args;
+	 JavaVMOption* jvm_options;
+	
+	 jclass jclass_classifier;
+	 jmethodID jmethodId_loadModel;
+	 jmethodID jmethodId_classify;
+	 int numberOfVariables;
+	
+	public:
+	void loadClassifier(char* modelFilePath, char* dataFilePath, int indexOfClass) {
+		jvm_options  = new JavaVMOption[1];
+		const char *c_cpkey = "-Djava.class.path=";
+		const char *c_cpvalue = getenv("CLASSPATH");
+		char c_classpath[18 + strlen(c_cpvalue)];
+		strcpy(c_classpath , c_cpkey);
+		strcat(c_classpath , c_cpvalue);
+		jvm_options[0].optionString = c_classpath;
 
-/**
-* Method to load the Model, Identify the number of parameters required, identify the class of the model
-* and execute the classification method
-*/
+		vm_args.version = JNI_VERSION_1_6;
+		vm_args.nOptions = 1;
+		vm_args.options = jvm_options;
+		vm_args.ignoreUnrecognized = false;
+		jint rc = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
+		delete jvm_options;	//TODO delete others as well
+
+		if (rc != JNI_OK) {
+			cin.get();
+		}
+		jint ver = env->GetVersion();
+		cout << "JVM load succeeded: Version " << ((ver>>16)&0x0f) << "."<<(ver&0x0f) << endl;
+		jclass_classifier = env->FindClass("GenericClassifierWeka");
+		if(jclass_classifier == NULL) {
+			cerr << "ERROR: class not found !" << endl;
+		} else {
+			cout << "Class GenericClassifierWeka found" << endl;
+			jmethodId_loadModel = env->GetStaticMethodID(jclass_classifier, 
+				"loadClassifier", "(Ljava/lang/String;Ljava/lang/String;I)I");
+			if(jmethodId_loadModel == NULL)
+				cerr << "ERROR: Method not found !" << endl;
+			else {
+				jobject inputStr = env->NewStringUTF(modelFilePath);
+				jobject inputDataFile = env->NewStringUTF(dataFilePath);
+				jint nov = env->CallStaticIntMethod(
+					jclass_classifier, jmethodId_loadModel,inputStr,inputDataFile,(jint)indexOfClass);
+ 				if (env->ExceptionCheck()) {
+                			env->ExceptionDescribe();
+				}
+				numberOfVariables = nov;
+				cout << endl << "Model Loaded " << endl;
+			}
+			jmethodId_classify = env->GetStaticMethodID(jclass_classifier, "classify", "([D)D");
+			if(jmethodId_classify == NULL)
+				cerr << "ERROR: Method 'classify' not found!" << endl;
+		}		
+	}
+
+	void classify(vector<double> inst) {
+		double arr[inst.size()];
+		std::copy(inst.begin(), inst.end(), arr);
+
+		jdoubleArray outJNIArray = env->NewDoubleArray(inst.size());
+		if (NULL != outJNIArray) //TODO Find what is the second variable
+			(*env).SetDoubleArrayRegion(outJNIArray, 0 , inst.size(), arr);
+		else
+			cout << "ERROR: Java Double Array not created";
+		jdouble j = env->CallStaticDoubleMethod(jclass_classifier , jmethodId_classify , outJNIArray);
+		if (env->ExceptionCheck()) {
+	             	env->ExceptionDescribe();
+		}
+		cout << endl << "Class : " << j << endl;
+	}
+};
+
+
+
 int main(int n, char *argv[]) {
 	
-	JavaVM *jvm;
-	JNIEnv *env;
-	JavaVMInitArgs vm_args;
-	JavaVMOption* options = new JavaVMOption[1];
+	GenericClassifierWeka classifier;
+	classifier.loadClassifier(argv[1], argv[2], atoi(argv[3]));
+	//double values[] = {4.8,3.4,1.6,0.2};
+	double p1[] = {5.0,3.6,1.4,0.2};
+	vector<double> a1(p1, p1+4);   
+	classifier.classify(a1);
 
-	const char *c_cpkey = "-Djava.class.path=";
-	const char *c_cpvalue = getenv("CLASSPATH");
-	char c_classpath[18 + strlen(c_cpvalue)];
-	strcpy(c_classpath , c_cpkey);
-	strcat(c_classpath , c_cpvalue);
-	options[0].optionString = c_classpath;
+	double p2[] = {7.0,3.2,4.7,1.4};
+	vector<double> a2(p2, p2+4);   
+	classifier.classify(a2);
 
-
-	vm_args.version = JNI_VERSION_1_8;
-	vm_args.nOptions = 1;
-	vm_args.options = options;
-	vm_args.ignoreUnrecognized = false;
-	jint rc = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
-	delete options;
-	if (rc != JNI_OK) {
-		cin.get();
-	}
-	jint ver = env->GetVersion();
-	cout << "JVM load succeeded: Version " << ((ver>>16)&0x0f) << "."<<(ver&0x0f) << endl;
+	double p3[] = {6.3,3.3,6.0,2.5};
+	vector<double> a3(p3, p3+4);   
+	classifier.classify(a3);
 	
-	
-	jclass cls2 = env->FindClass("GenericClassifierWeka");
-	if(cls2 == NULL) {
-		cerr << "ERROR: class not found !" << endl;
-	} else {
-		cout << "Class GenericClassifierWeka found" << endl;
-		jmethodID mid = env->GetStaticMethodID(cls2, "loadClassifier", "(Ljava/lang/String;Ljava/lang/String;I)V");
-		if(mid == NULL)
-			cerr << "ERROR: Method not found !" << endl;
-		else {
-			jobject inputStr = env->NewStringUTF(argv[1]);
-			jobject inputDataFile = env->NewStringUTF(argv[2]);
-			env->CallStaticVoidMethod(cls2, mid,inputStr,inputDataFile,(jint)atoi(argv[3]));
- 			if (env->ExceptionCheck()) {
-                		env->ExceptionDescribe();
-			}
-			cout << endl << "Model Loaded " << endl;
-		}
+	double p4[] = {1.0,1.2,1.4,1.6};
+	vector<double> a4(p4, p4+4);   
+	classifier.classify(a4);
 
-		jmethodID mid2 = env->GetStaticMethodID(cls2, "classify", "([D)D");
-		 
-		if(mid2 == NULL)
-			cerr << "ERROR: Method not found!" << endl;
-		else {
-
-			double values[] = {4.8,3.4,1.6,0.2};
-			
-			int sizeOfArray = sizeof(values)/sizeof(*values);
-
-			int classOfSample = classify(values,sizeOfArray,cls2,mid2,env);
-			cout <<  "Class of provided input is " << classOfSample  << endl;
-		}
-	}
-	
-	jvm->DestroyJavaVM();
-	cout <<  "JVM Destroyed!" << endl;
 	return -1;
 }
-
-
