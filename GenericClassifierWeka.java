@@ -17,7 +17,7 @@ public class GenericClassifierWeka {
 	private static Integer indexOfClassAttr;
 
 	public static void main(String[] args) throws Exception {
-		loadClassifier("Arun.model", "irisData.csv", 4);
+		loadClassifier("/home/milind/workspace_robotics/CPP/Arun.model", "/home/milind/Desktop/cyberglove/irisData.csv", 4);
 		double[] d1 = {5.0,3.5,1.6,0.6};
 		double[] d2 = {5.9,3.0,4.2,1.5};
 		double[] d3 = {6.0,6.0,6.0,6.3};
@@ -26,14 +26,14 @@ public class GenericClassifierWeka {
 		System.out.println(classify(d3));
 	}
 	
-	public static void loadClassifier(String modelFileName, String dataFile, int indexOfClass) {
+	public static int loadClassifier(String modelFileName, String dataFile, int indexOfClass) {
 		System.out.println();
 		// 1. READ CLASSIFIER MODEL
 		try {
 			cls = (Classifier) SerializationHelper.read(modelFileName);
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
-			return;
+			return 0;
 		}
 		
 		// 2. READ DATAFILE FOR INSTANCES
@@ -43,7 +43,7 @@ public class GenericClassifierWeka {
 			data = new Instances(datafile);
 		} catch (IOException e) {
 			e.printStackTrace();
-			return;
+			return 0;
 		}
 		// 4. SET COLUMN OF CLASS IN DATA SET
 		data.setClassIndex(data.numAttributes() - 1);
@@ -54,8 +54,10 @@ public class GenericClassifierWeka {
 			indexOfClassAttr = indexOfClass;
 		} else {
 			System.out.println("ERROR: Class attribute index inconsistent");
+			return 0;
 		}
 		System.out.println("Class of model: "+cls.getClass());
+		return numOfAttributes;
 	}
 
 	public static double classify(double[] arr) throws Exception {
