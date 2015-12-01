@@ -4,8 +4,8 @@ clear
 ##########################################################################
 # VARIABLES TO BE SET BY THE USER
 export JAVA_HOME=/usr/lib/jvm/java-8-oracle
-export WORK_DIRECTORY=/home/milind/workspace_robotics/gitRepo/Robotics/
-export WEKA_HOME=/home/milind/Desktop/JNI_Test/weka-3-6-13
+export WORK_DIRECTORY=/home/ni/Robotics/CPP/Robotics/
+export WEKA_HOME=/opt/weka-3-6-13
 ##########################################################################
 
 # EXTENDED VARIABLES
@@ -48,7 +48,7 @@ if [ -a executable ]
 	then
 		rm executable	
 fi
-g++ -Wno-write-strings -I $JAVA_HOME/include/ -I $JAVA_HOME/include/linux/ GenericClassifierWeka.cpp -o executable -L${LIBPATH} -ljvm 
+#g++ -Wno-write-strings -I $JAVA_HOME/include/ -I $JAVA_HOME/include/linux/ GenericClassifierWeka.cpp -o GenericClassifierWeka -L${LIBPATH} -ljvm
+g++ -Wno-write-strings -I $JAVA_HOME/include/ -I $JAVA_HOME/include/linux/ KNN.cpp -o executable -L${LIBPATH} -ljvm
 
-
-./executable /home/milind/workspace_robotics/CPP/Arun.model /home/milind/workspace_robotics/CPP/irisData.csv 5
+./executable

@@ -71,7 +71,7 @@ class GenericClassifierWeka {
 		}		
 	}
 
-	void classify(vector<double> inst) {
+	double classify(vector<double> inst) {
 		double arr[inst.size()];
 		std::copy(inst.begin(), inst.end(), arr);
 
@@ -80,14 +80,14 @@ class GenericClassifierWeka {
 			(*env).SetDoubleArrayRegion(outJNIArray, 0 , inst.size(), arr);
 		else
 			cout << "ERROR: Java Double Array not created";
-		jdouble j = env->CallStaticDoubleMethod(jclass_classifier , jmethodId_classify , outJNIArray);
+		jdouble classOfVector = env->CallStaticDoubleMethod(jclass_classifier , jmethodId_classify , outJNIArray);
 		if (env->ExceptionCheck()) {
 	             	env->ExceptionDescribe();
 		}
-		cout << endl << "Class : " << j << endl;
+		return classOfVector;
 	}
 
-	void classify(double *inst, int size) {
+	double classify(double *inst, int size) {
 		//double arr[inst.size()];
 		//std::copy(inst.begin(), inst.end(), arr);
 
@@ -96,38 +96,12 @@ class GenericClassifierWeka {
 			(*env).SetDoubleArrayRegion(outJNIArray, 0 , size, inst);
 		else
 			cout << "ERROR: Java Double Array not created";
-		jdouble j = env->CallStaticDoubleMethod(jclass_classifier , jmethodId_classify , outJNIArray);
+		jdouble classOfVector = env->CallStaticDoubleMethod(jclass_classifier , jmethodId_classify , outJNIArray);
 		if (env->ExceptionCheck()) {
 	             	env->ExceptionDescribe();
 		}
-		cout << endl << "Class : " << j << endl;
+		return classOfVector;
 	}
 };
-
-int main1(int n, char *argv[]) {
-	
-	GenericClassifierWeka classifier;
-	
-	
-	classifier.loadClassifier(argv[1], argv[2], atoi(argv[3]));
-	//double values[] = {4.8,3.4,1.6,0.2};
-	double p1[] = {5.0,3.6,1.4,0.2};
-	int sizeOfVector = sizeof(p1)/sizeof(*p1);
-	classifier.classify(p1,sizeOfVector);
-
-	double p2[] = {7.0,3.2,4.7,1.4};
-	vector<double> a2(p2, p2+4);   
-	classifier.classify(a2);
-
-	double p3[] = {6.3,3.3,6.0,2.5};
-	vector<double> a3(p3, p3+4);   
-	classifier.classify(a3);
-	
-	double p4[] = {1.0,1.2,1.4,1.6};
-	vector<double> a4(p4, p4+4);   
-	classifier.classify(a4);
-
-	return -1;
-}
 
 
