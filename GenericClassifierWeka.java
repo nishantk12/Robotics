@@ -16,51 +16,50 @@ public class GenericClassifierWeka {
 	private static Integer numOfAttributes;
 	private static Integer indexOfClassAttr;
 
-	public static void main(String[] args) throws Exception {
-		loadClassifier("/home/milind/workspace_robotics/CPP/Arun.model", "/home/milind/Desktop/cyberglove/irisData.csv", 4);
-		double[] d1 = {5.0,3.5,1.6,0.6};
-		double[] d2 = {5.9,3.0,4.2,1.5};
-		double[] d3 = {6.0,6.0,6.0,6.3};
-		System.out.println(classify(d1));
-		System.out.println(classify(d2));
-		System.out.println(classify(d3));
-	}
-	
-	public static int loadClassifier(String modelFileName, String dataFile, int indexOfClass) {
+	public static int loadClassifier(String modelFileName, String dataFile, int indexOfClass) throws Exception{
 		System.out.println();
 		// 1. READ CLASSIFIER MODEL
-		try {
+		//try {
 			cls = (Classifier) SerializationHelper.read(modelFileName);
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-			return 0;
-		}
+		//} catch (FileNotFoundException fileNotFoundException) {
+		//	System.out.println(fileNotFoundException.getMessage());
+		//	return 0;
+		//}
 		
-		// 2. READ DATAFILE FOR INSTANCES
-		BufferedReader datafile = readDataFile(dataFile);
-		// 3. Extract data from the file
-		try {
-			data = new Instances(datafile);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return 0;
-		}
-		// 4. SET COLUMN OF CLASS IN DATA SET
-		data.setClassIndex(data.numAttributes() - 1);
-		numOfAttributes = data.numAttributes();
-		System.out.println("Number of attr: "+ numOfAttributes);
+		if(cls!=null){
+			// 2. READ DATAFILE FOR INSTANCES
+			BufferedReader datafile = readDataFile(dataFile);
+			// 3. Extract data from the file
+			try {
+				data = new Instances(datafile);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return 0;
+			}
+			// 4. SET COLUMN OF CLASS IN DATA SET
+			data.setClassIndex(data.numAttributes() - 1);
+			numOfAttributes = data.numAttributes();
+			System.out.println("Number of attr: "+ numOfAttributes);
 
-		if (indexOfClass - 1 < numOfAttributes) {
-			indexOfClassAttr = indexOfClass;
-		} else {
-			System.out.println("ERROR: Class attribute index inconsistent");
-			return 0;
+			if (indexOfClass - 1 < numOfAttributes) {
+				indexOfClassAttr = indexOfClass;
+			} else {
+				System.out.println("ERROR: Class attribute index inconsistent");
+				return 0;
+			}
+			System.out.println("Class of model: "+cls.getClass());
+			return numOfAttributes;
+		}else{
+			System.out.println("Some error in loading model file");
+			return -1;
 		}
-		System.out.println("Class of model: "+cls.getClass());
-		return numOfAttributes;
 	}
 
 	public static double classify(double[] arr) throws Exception {
+		if(arr==null || arr.length==0){
+			System.out.println("ERROR: Error in passed array");
+			return -1;
+		}
 		//1. Check the number of attributes are consistent or not
 		if (arr.length != numOfAttributes - 1) {
 			System.out.println("ERROR: Number of attributes are inconsistent");

@@ -26,6 +26,7 @@ class GenericClassifierWeka {
 		strcpy(c_classpath , c_cpkey);
 		strcat(c_classpath , c_cpvalue);
 		jvm_options[0].optionString = c_classpath;
+		jthrowable exc;
 
 		vm_args.version = JNI_VERSION_1_6;
 		vm_args.nOptions = 1;
@@ -53,8 +54,12 @@ class GenericClassifierWeka {
 				jobject inputDataFile = env->NewStringUTF(dataFilePath);
 				jint nov = env->CallStaticIntMethod(
 					jclass_classifier, jmethodId_loadModel,inputStr,inputDataFile,(jint)indexOfClass);
+				
  				if (env->ExceptionCheck()) {
+					cout << endl << "Model Not Loaded " << endl;
                 			env->ExceptionDescribe();
+					//exc = env->ExceptionOccurred(env); TODO : print execption as a single string
+					exit(1);
 				}
 				numberOfVariables = nov;
 				cout << endl << "Model Loaded " << endl;
