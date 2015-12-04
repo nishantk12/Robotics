@@ -29,9 +29,9 @@ class GenericClassifierWeka {
 // The method loadClassifier provieds an interface to load the classifier
 // in your driver program. The class takes 3 inputs namely:
 // inputModelFilePath : the path of your Weka model 
-// inputDataFilePath : The path of your DataFile , weka needs the datafile to ??
+// inputPropertyFilePath : The path of your DataFile , weka needs the propertyfile to ??
 // indexOfClass : 
-// Example loadClassifier("/myFolder/Weka.model","/myFolder/myData.csv", 1);	
+// Example loadClassifier("/myFolder/Weka.model","/myFolder/myData.property", 1);	
 // The method only sets the Classpath parameter while initailaizing the JVM
 // User may add set more option parameter to the JVM by modifying the heaader file
 // The method throws four Exceptions such as the Java class GenericWeka not found,
@@ -68,36 +68,31 @@ class GenericClassifierWeka {
 		}
 
 
-		jint version = jniEnv->GetVersion();
-		cout << "JVM load succeeded: Version " << ((version>>16)&0x0f) << "."<<(version&0x0f) << endl;
+		//jint version = jniEnv->GetVersion();
+		//cout << "JVM load succeeded: Version " << ((version>>16)&0x0f) << "."<<(version&0x0f) << endl;
 		jclassClassifier = jniEnv->FindClass("GenericClassifierWeka");
 
 		if(jclassClassifier == NULL) {
 			 	throw "ERROR: java class GenericClassifierWeka not found ";
 			
 		} else {
-				cout << "Class GenericClassifierWeka found" << endl;
-				jmethodIdLoadModel = jniEnv->GetStaticMethodID(jclassClassifier, 
-															"loadClassifier", 
-															"(Ljava/lang/String;Ljava/lang/String;I)I");
-
+				//cout << "Class GenericClassifierWeka found" << endl;
+				jmethodIdLoadModel = jniEnv->GetStaticMethodID(jclassClassifier,"loadClassifier", "(Ljava/lang/String;Ljava/lang/String;I)I");
+				
 				if(jmethodIdLoadModel == NULL){
 				   	 throw "ERROR: java Method loadClassifier of class GenericClassifierWeka not found !";
 				}else {
-						jobject  modelFilePath = jniEnv->NewStringUTF(inputModelFilePath);
-						jobject  dataFilePath = jniEnv->NewStringUTF(inputDataFilePath);
-						jint numberOfModelAttributes = jniEnv->CallStaticIntMethod(jclassClassifier, 
-																				jmethodIdLoadModel,
-																				modelFilePath ,
-																				dataFilePath,
-																				(jint)indexOfClass);
-				
- 						if (jniEnv->ExceptionCheck()) {
-							throw " EXCEPTION : Model Not Loaded ";
-							exit(1);
-						}
-
-						cout << endl << "Model Loaded " << endl;
+						
+					jobject  modelFilePath = jniEnv->NewStringUTF(inputModelFilePath);
+					jobject  dataFilePath = jniEnv->NewStringUTF(inputDataFilePath);
+					jint numberOfModelAttributes = jniEnv->CallStaticIntMethod(jclassClassifier,jmethodIdLoadModel,modelFilePath,dataFilePath,(jint)indexOfClass);
+						
+ 					if (jniEnv->ExceptionCheck()) {
+						jniEnv->ExceptionDescribe();
+						throw " ERROR : Model Not Loaded ";
+						exit(1);
+					}
+						
 			}
 			
 			jmethodIdForClassification = jniEnv->GetStaticMethodID(jclassClassifier, "classify", "([D)D");
@@ -142,6 +137,7 @@ class GenericClassifierWeka {
 		jdouble classOftheVector = jniEnv->CallStaticDoubleMethod(jclassClassifier , jmethodIdForClassification, outJNIArray);
 
 		if (jniEnv->ExceptionCheck()) {
+			jniEnv->ExceptionDescribe();
 	             	throw "ERROR : Class of the Vector could not be found";
 		}
 		return classOftheVector;
@@ -166,6 +162,7 @@ class GenericClassifierWeka {
 
 		jdouble classOftheVector = jniEnv->CallStaticDoubleMethod(jclassClassifier , jmethodIdForClassification , outJNIArray);
 		if (jniEnv->ExceptionCheck()) {
+			jniEnv->ExceptionDescribe();
 	             	throw "ERROR : Class of the Vector could not be found";
 		}
 		return classOftheVector;
