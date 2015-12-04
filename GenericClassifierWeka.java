@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.File;
 
 import weka.classifiers.Classifier;
 import weka.core.Instance;
@@ -16,84 +17,100 @@ public class GenericClassifierWeka {
 	private static Integer numOfAttributes;
 	private static Integer indexOfClassAttr;
 
-	public static int loadClassifier(String modelFileName, String dataFile, int indexOfClass) throws Exception{
-		System.out.println();
-		// 1. READ CLASSIFIER MODEL
-		//try {
-			cls = (Classifier) SerializationHelper.read(modelFileName);
-		//} catch (FileNotFoundException fileNotFoundException) {
-		//	System.out.println(fileNotFoundException.getMessage());
-		//	return 0;
-		//}
-		
-		if(cls!=null){
-			// 2. READ DATAFILE FOR INSTANCES
-			BufferedReader datafile = readDataFile(dataFile);
-			// 3. Extract data from the file
-			try {
-				data = new Instances(datafile);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return 0;
-			}
-			// 4. SET COLUMN OF CLASS IN DATA SET
-			data.setClassIndex(data.numAttributes() - 1);
-			numOfAttributes = data.numAttributes();
-			System.out.println("Number of attr: "+ numOfAttributes);
-
-			if (indexOfClass - 1 < numOfAttributes) {
-				indexOfClassAttr = indexOfClass;
-			} else {
-				System.out.println("ERROR: Class attribute index inconsistent");
-				return 0;
-			}
-			System.out.println("Class of model: "+cls.getClass());
-			return numOfAttributes;
-		}else{
-			System.out.println("Some error in loading model file");
-			return -1;
+	public static int loadClassifier(String modelFilePath, String propertyFilePath, int indexOfClass) throws Exception{
+		//0.0 Check indexOfClass
+		if(indexOfClass < 1){
+			throw new Exception("Index of Class cannot be less than 1");
 		}
+	
+		//0.1 Check if file is present at given path model file path
+		try{
+			if(modelFilePath==null || modelFilePath.equals("")){
+				throw new Exception("Please provide a correct path for model file");
+			}
+			File modelFile = new File(modelFilePath);
+			if(!modelFile.exists() || modelFile.isDirectory()) { 
+			    throw new Exception("Provided path \"" + modelFilePath + "\" is not a file");
+			}
+		}catch(NullPointerException nullPointerException){
+			throw new Exception("Model File path not provided");
+		}
+
+		//0.2 Check if file is present at given properties file path
+		try{
+			if(propertyFilePath==null || propertyFilePath.equals("")){
+				throw new Exception("Please provide a correct path for property file");
+			}
+			File propertyFile = new File(propertyFilePath);
+			if(!propertyFile.exists() || propertyFile.isDirectory()) { 
+			    throw new Exception("Provided path \"" + propertyFilePath + "\" is not a file");
+			}
+		}catch(NullPointerException nullPointerException){
+			throw new Exception("Property File path not provided");
+		}
+
+		// 1. READ CLASSIFIER MODEL
+		try {
+			cls = (Classifier) SerializationHelper.read(modelFilePath);
+		} catch (Exception ex) {
+			throw new Exception("File present at \"" + modelFilePath + "\" is not a model file");
+		}
+		
+		// 2. READ DATAFILE FOR INSTANCES
+		BufferedReader propertyfile = new BufferedReader(new FileReader(propertyFilePath));
+
+		// 3. Extract data from the file
+		try{
+			data = new Instances(propertyfile);
+		} catch (IOException iOException) {
+			throw new Exception("Problem reading the property file : \n\t" + iOException.getMessage());
+		}
+		
+
+		// 4. SET COLUMN OF CLASS IN DATA SET
+		numOfAttributes = data.numAttributes();
+		if (indexOfClass - 1 < numOfAttributes) {
+			data.setClassIndex(indexOfClass-1);
+			indexOfClassAttr = indexOfClass;
+		} else {
+			throw new Exception("As per property file, index of Class must be between 1 and "
+						 + numOfAttributes + " and provided is " + indexOfClass);
+		}
+		
+		return numOfAttributes;
 	}
 
-	public static double classify(double[] arr) throws Exception {
-		if(arr==null || arr.length==0){
-			System.out.println("ERROR: Error in passed array");
-			return -1;
+	public static double classify(double[] candidateArray) throws Exception {
+		if(candidateArray==null || candidateArray.length==0){
+			throw new Exception("Input Array must not be empty");
 		}
 		//1. Check the number of attributes are consistent or not
-		if (arr.length != numOfAttributes - 1) {
-			System.out.println("ERROR: Number of attributes are inconsistent");
-			return -1;
+		if (candidateArray.length != numOfAttributes-1) {
+			throw new Exception("Size mismatch : Input array provided is of size " + candidateArray.length + 
+						" and expected is " + String.valueOf(numOfAttributes-1));
 		}
-		
 		// 2. Create an Instance Object for classifying
-		Instance ins = new Instance(numOfAttributes);
+		Instance instance = new Instance(numOfAttributes);
+
 		// 3. Assign the dataset of Weka Model.
-		ins.setDataset(data);
+		instance.setDataset(data);
 
 		// 4. Set Attributes of the Instance
-		for (int i = 0; i < numOfAttributes; i++) {
-			if (i != indexOfClassAttr - 1) {
-				ins.setValue(i, arr[i]);
-			} else {
-				i++;
+		int attributeIndex = 0;
+		for (int index = 0; index < candidateArray.length;index++) {
+			if(index == indexOfClassAttr-1){
+				attributeIndex++;
 			}
+			instance.setValue(attributeIndex,candidateArray[index]);
+			attributeIndex++;			
 		}
 		// 5. Set the missing attribute //TODO Are MIssing parameters allowed in any classification ASK PROF
-		ins.setMissing(indexOfClassAttr - 1);
-
-		return cls.classifyInstance(ins);
-	}
-
-	private static BufferedReader readDataFile(String filename) {
-		BufferedReader inputReader = null;
-
-		try {
-			inputReader = new BufferedReader(new FileReader(filename));
-		} catch (FileNotFoundException ex) {
-			System.out.println("ERROR: File not found: " + filename);
+		//ins.setMissing(indexOfClassAttr - 1);
+		try{
+			return cls.classifyInstance(instance);
+		}catch(ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException){
+			throw new Exception("Probable mismatch of class Index : " + indexOfClassAttr + 
+					" was provided as input,\n please check in model and property file");
 		}
-
-		return inputReader;
 	}
 }
