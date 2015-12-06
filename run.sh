@@ -49,6 +49,6 @@ if [ -a executable ]
 		rm executable	
 fi
 #g++ -Wno-write-strings -I $JAVA_HOME/include/ -I $JAVA_HOME/include/linux/ GenericClassifierWeka.cpp -o GenericClassifierWeka -L${LIBPATH} -ljvm
-g++ -Wno-write-strings -I $JAVA_HOME/include/ -I $JAVA_HOME/include/linux/ KNN.cpp -o executable -L${LIBPATH} -ljvm
+g++ -Wno-write-strings -I $JAVA_HOME/include/ -I $JAVA_HOME/include/linux/ MultiClass.cpp -o executable -L${LIBPATH} -ljvm
 
 ./executable
